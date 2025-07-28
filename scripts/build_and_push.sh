@@ -1,19 +1,16 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 
-# Get the latest short Git commit hash
-GIT_COMMIT=$(git rev-parse --short HEAD)
-
-# DockerHub image name (replace with your real DockerHub username if different)
-IMAGE="diyacapg/myapp:$GIT_COMMIT"
-
-echo "[INFO] Building Docker image: $IMAGE"
-docker build -t $IMAGE ..
+echo "[INFO] Building Docker image: diyacapg/myapp:$(git rev-parse --short HEAD)"
+docker build -t diyacapg/myapp:$(git rev-parse --short HEAD) .
+docker tag diyacapg/myapp:$(git rev-parse --short HEAD) diyacapg/myapp:latest
 
 echo "[INFO] Logging in to DockerHub"
-docker login
+echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-echo "[INFO] Pushing Docker image to DockerHub"
-docker push $IMAGE
+echo "[INFO] Pushing Docker image with tag $(git rev-parse --short HEAD)"
+docker push diyacapg/myapp:$(git rev-parse --short HEAD)
+docker push diyacapg/myapp:latest
 
-echo "[SUCCESS] Docker image pushed: $IMAGE"
+echo "[SUCCESS] Docker image pushed!"
+
