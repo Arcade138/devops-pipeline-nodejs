@@ -31,6 +31,7 @@ pipeline {
       steps {
         dir('ansible') {
           sh '''
+            chmod 400 casestudy2key.pem
             ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini deploy.yml
           '''
         }
