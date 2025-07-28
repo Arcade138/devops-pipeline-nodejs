@@ -34,7 +34,7 @@ pipeline {
           withCredentials([file(credentialsId: 'aws-ec2-key', variable: 'EC2_KEY')]) {
             sh '''
               chmod 400 $EC2_KEY
-              ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini deploy.yml --private-key=$EC2_KEY
+              ANSIBLE_HOST_KEY_CHECKING=False EC2_KEY=$EC2_KEY ansible-playbook -i hosts.ini deploy.yml
             '''
           }
         }
