@@ -1,11 +1,23 @@
 pipeline {
   agent any
+
   environment {
-    IMAGE_NAME = 'diyacapg/myapp:${GIT_COMMIT::7}'
+    IMAGE_NAME = 'diyacapg/myapp'
   }
+
   stages {
-    stage('Clean Workspace') { steps { cleanWs() } }
-    stage('Clone Repo') { steps { git branch: 'develop', url: 'https://github.com/Arcade138/devops-pipeline-nodejs.git' } }
+    stage('Clean Workspace') {
+      steps {
+        cleanWs()
+      }
+    }
+
+    stage('Clone Repo') {
+      steps {
+        git branch: 'develop', credentialsId: 'github-pat', url: 'https://github.com/Arcade138/devops-pipeline-nodejs.git'
+      }
+    }
+
     stage('Build & Push Docker Image') {
       steps {
         script {
@@ -14,9 +26,10 @@ pipeline {
         }
       }
     }
+
     stage('Terraform Apply') {
       steps {
-        dir('infra') {
+        dir('terraform') {
           sh '''
             terraform init
             terraform apply -auto-approve
@@ -24,6 +37,7 @@ pipeline {
         }
       }
     }
+
     stage('Deploy with Ansible') {
       steps {
         sh '''
@@ -32,5 +46,13 @@ pipeline {
       }
     }
   }
-  post { success { echo '✅ Pipeline succeeded' } failure { echo '❌ Pipeline failed' } }
+
+  post {
+    success {
+      echo '✅ Pipeline succeeded'
+    }
+    failure {
+      echo '❌ Pipeline failed'
+    }
+  }
 }
