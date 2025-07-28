@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME = 'diyacapg/myapp:latest'
+    IMAGE_NAME = 'diyacapg/myapp'
   }
 
   stages {
@@ -20,13 +20,15 @@ pipeline {
 
     stage('Build Docker Image') {
       steps {
-        sh './scripts/build_and_push.sh'
+        dir('devops-pipeline-nodejs') {
+          sh './scripts/build_and_push.sh'
+        }
       }
     }
 
     stage('Terraform Apply') {
       steps {
-        dir('infra') {
+        dir('devops-pipeline-nodejs/infra') {
           sh '''
             terraform init
             terraform apply -auto-approve
@@ -37,16 +39,19 @@ pipeline {
 
     stage('Deploy with Ansible') {
       steps {
-        sh '''
-          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/hosts.ini ansible/deploy.yml
-        '''
+        dir('devops-pipeline-nodejs') {
+          sh 'ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/hosts.ini ansible/deploy.yml'
+        }
       }
     }
 
     stage('Cleanup') {
       steps {
-        sh './scripts/cleanup.sh'
+        dir('devops-pipeline-nodejs') {
+          sh './scripts/cleanup.sh'
+        }
       }
     }
   }
 }
+
