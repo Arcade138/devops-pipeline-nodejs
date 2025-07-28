@@ -31,7 +31,7 @@ pipeline {
       steps {
         dir('ansible') {
           sh '''
-            ansible-playbook -i hosts.ini deploy.yml
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/hosts.ini ansible/deploy.yml
           '''
         }
       }
