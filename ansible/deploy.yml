@@ -1,0 +1,30 @@
+---
+- name: Deploy Node.js App on EC2
+  hosts: webservers
+  become: true
+
+  tasks:
+    - name: Ensure Docker is installed
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Log in to Docker Hub
+      shell: echo "seS*68SeiRYSL*p" | docker login -u "diyacapg
+
+" --password-stdin
+      args:
+        executable: /bin/bash
+
+    - name: Pull latest Docker image
+      shell: docker pull diyacapg/myapp:latest
+
+    - name: Stop existing container (if running)
+      shell: docker stop myapp || true
+
+    - name: Remove existing container (if exists)
+      shell: docker rm myapp || true
+
+    - name: Run new container
+      shell: docker run -d --name myapp -p 80:3000 diyacapg/myapp:latest
