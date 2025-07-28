@@ -6,6 +6,7 @@ pipeline {
   }
 
   stages {
+
     stage('Clean Workspace') {
       steps {
         cleanWs()
@@ -30,10 +31,12 @@ pipeline {
     stage('Deploy with Ansible') {
       steps {
         dir('ansible') {
-          sh '''
-            chmod 400 casestudy2key.pem
-            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini deploy.yml
-          '''
+          withCredentials([file(credentialsId: 'aws-ec2-key', variable: 'EC2_KEY')]) {
+            sh '''
+              chmod 400 $EC2_KEY
+              ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i hosts.ini deploy.yml --private-key=$EC2_KEY
+            '''
+          }
         }
       }
     }
