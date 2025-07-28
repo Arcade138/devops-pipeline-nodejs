@@ -2,7 +2,11 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME = 'diyacapg/myapp'
+    IMAGE_NAME = 'diyacapg/myapp:${GIT_COMMIT_SHORT}'
+  }
+
+  triggers {
+    cron('H 1 * * *') // Optional daily trigger
   }
 
   stages {
@@ -14,44 +18,51 @@ pipeline {
 
     stage('Clone Repo') {
       steps {
-        git branch: 'develop', credentialsId: 'github-pat', url: 'https://github.com/Arcade138/devops-pipeline-nodejs.git'
+        git branch: 'develop', url: 'https://github.com/Arcade138/devops-pipeline-nodejs.git'
       }
     }
 
     stage('Build Docker Image') {
       steps {
-        dir('devops-pipeline-nodejs') {
-          sh './scripts/build_and_push.sh'
-        }
+        sh './scripts/build_and_push.sh'
       }
     }
 
     stage('Terraform Apply') {
       steps {
-        dir('devops-pipeline-nodejs/infra') {
-          sh '''
-            terraform init
-            terraform apply -auto-approve
-          '''
+        withCredentials([file(credentialsId: 'aws-creds', variable: 'AWS_CREDENTIALS_FILE')]) {
+          dir('infra') {
+            sh '''
+              export AWS_SHARED_CREDENTIALS_FILE=$AWS_CREDENTIALS_FILE
+              terraform init
+              terraform apply -auto-approve
+            '''
+          }
         }
       }
     }
 
     stage('Deploy with Ansible') {
       steps {
-        dir('devops-pipeline-nodejs') {
-          sh 'ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/hosts.ini ansible/deploy.yml'
-        }
+        sh '''
+          ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/hosts.ini ansible/deploy.yml
+        '''
       }
     }
 
     stage('Cleanup') {
       steps {
-        dir('devops-pipeline-nodejs') {
-          sh './scripts/cleanup.sh'
-        }
+        sh './scripts/cleanup.sh'
       }
     }
   }
-}
 
+  post {
+    success {
+      echo '✅ CI/CD pipeline completed successfully.'
+    }
+    failure {
+      echo '❌ CI/CD pipeline failed.'
+    }
+  }
+}
