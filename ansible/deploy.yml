@@ -1,25 +1,13 @@
----
 - name: Deploy Dockerized Node.js App
-  hosts: all
-  become: yes
-
+  hosts: web
+  vars:
+    private_key: "{{ lookup('env','EC2_KEY') }}"
   tasks:
-    - name: Stop and remove existing container
-      shell: |
-        if docker ps -a --format '{{.Names}}' | grep -Eq '^myapp$'; then
-          docker rm -f myapp
-        fi
-      ignore_errors: yes
-
-    - name: Remove old image
-      shell: |
-        if docker images -q diyacapg/myapp:latest; then
-          docker rmi -f diyacapg/myapp:latest
-        fi
-      ignore_errors: yes
-
     - name: Pull latest image
       shell: docker pull diyacapg/myapp:latest
+
+    - name: Stop running container if any
+      shell: docker rm -f myapp || true
 
     - name: Run new container
       shell: docker run -d --name myapp -p 80:3000 diyacapg/myapp:latest
