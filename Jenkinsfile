@@ -2,11 +2,12 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME = 'diyacapg/myapp:${GIT_COMMIT_SHORT}'
+    IMAGE_NAME = 'diyacapg/myapp:${GIT_COMMIT::7}'
   }
 
   triggers {
-    cron('H 1 * * *') // Optional daily trigger
+    // Optional: Run the pipeline at 1 AM daily
+    cron('H 1 * * *')
   }
 
   stages {
@@ -22,22 +23,24 @@ pipeline {
       }
     }
 
-    stage('Build Docker Image') {
+    stage('Build & Push Docker Image') {
       steps {
-        sh './scripts/build_and_push.sh'
+        script {
+          sh '''
+            chmod +x scripts/build_and_push.sh
+            ./scripts/build_and_push.sh
+          '''
+        }
       }
     }
 
     stage('Terraform Apply') {
       steps {
-        withCredentials([file(credentialsId: 'aws-creds', variable: 'AWS_CREDENTIALS_FILE')]) {
-          dir('infra') {
-            sh '''
-              export AWS_SHARED_CREDENTIALS_FILE=$AWS_CREDENTIALS_FILE
-              terraform init
-              terraform apply -auto-approve
-            '''
-          }
+        dir('infra') {
+          sh '''
+            terraform init
+            terraform apply -auto-approve
+          '''
         }
       }
     }
@@ -49,20 +52,17 @@ pipeline {
         '''
       }
     }
-
-    stage('Cleanup') {
-      steps {
-        sh './scripts/cleanup.sh'
-      }
-    }
   }
 
   post {
+    always {
+      echo "Pipeline execution completed."
+    }
     success {
-      echo '✅ CI/CD pipeline completed successfully.'
+      echo "Pipeline executed successfully!"
     }
     failure {
-      echo '❌ CI/CD pipeline failed.'
+      echo "Pipeline failed."
     }
   }
 }
