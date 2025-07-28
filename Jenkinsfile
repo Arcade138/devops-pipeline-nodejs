@@ -14,7 +14,7 @@ pipeline {
 
     stage('Clone Repo') {
       steps {
-        git branch: 'develop', credentialsId: 'github-pat', url: 'https://github.com/Arcade138/devops-pipeline-nodejs.git'
+        git branch: 'develop', url: 'https://github.com/Arcade138/devops-pipeline-nodejs.git'
       }
     }
 
@@ -30,10 +30,17 @@ pipeline {
     stage('Terraform Apply') {
       steps {
         dir('terraform') {
-          sh '''
-            terraform init
-            terraform apply -auto-approve
-          '''
+          withCredentials([
+            string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY'),
+            string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_KEY')
+          ]) {
+            sh '''
+              terraform init
+              terraform apply -auto-approve \
+                -var "AWS_ACCESS_KEY=${AWS_ACCESS_KEY}" \
+                -var "AWS_SECRET_KEY=${AWS_SECRET_KEY}"
+            '''
+          }
         }
       }
     }
