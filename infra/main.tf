@@ -12,6 +12,7 @@ resource "aws_vpc" "main_vpc" {
     Name = "devops-vpc"
   }
 }
+#This block creates a custom VPC for isolating project infrastructure.
 
 # Subnet
 resource "aws_subnet" "public_subnet" {
@@ -24,6 +25,7 @@ resource "aws_subnet" "public_subnet" {
     Name = "devops-subnet"
   }
 }
+#Public subnet allows EC2 instance to access internet.
 
 # Internet Gateway
 resource "aws_internet_gateway" "igw" {
@@ -33,6 +35,8 @@ resource "aws_internet_gateway" "igw" {
     Name = "devops-igw"
   }
 }
+
+#Internet Gateway enables communication between VPC and internet.
 
 # Route Table
 resource "aws_route_table" "public_rt" {
@@ -48,11 +52,15 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
+#Route table directs external traffic through Internet Gateway.
+
 # Route Table Association
 resource "aws_route_table_association" "rt_assoc" {
   subnet_id      = aws_subnet.public_subnet.id
   route_table_id = aws_route_table.public_rt.id
 }
+
+#Associates public subnet with public route table.
 
 # Security Group
 resource "aws_security_group" "web_sg" {
@@ -86,6 +94,8 @@ resource "aws_security_group" "web_sg" {
   }
 }
 
+#Security group allows SSH and HTTP traffic to EC2 instance.
+
 # EC2 Instance
 resource "aws_instance" "app_server" {
   ami           = "ami-0f58b397bc5c1f2e8"  # Ubuntu 22.04 (Mumbai)
@@ -100,8 +110,12 @@ resource "aws_instance" "app_server" {
   }
 }
 
+#This block creates Ubuntu EC2 instance with public IP and security group.
+
 # Elastic IP
 resource "aws_eip" "elastic_ip" {
   instance = aws_instance.app_server.id
 }
+
+#fixed permanent IP.Attaches Elastic IP to EC2.
 EOF
